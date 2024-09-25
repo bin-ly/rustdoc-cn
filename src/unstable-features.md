@@ -1,26 +1,16 @@
 # 不稳定特性
 
-Rustdoc is under active development, and like the Rust compiler, some features are only available
-on nightly releases. Some of these features are new and need some more testing before they're able to be
-released to the world at large, and some of them are tied to features in the Rust compiler that are unstable. Several features here require a matching `#![feature(...)]` attribute to
-enable, and thus are more fully documented in the [Unstable Book]. Those sections will link over
-there as necessary.
+Rustdoc正处于活跃开发中，就像Rust编译器一样，某些功能仅在夜间版本（nightly releases）中可用。这些功能中有一些是新的，需要更多的测试才能向广大用户发布，而另一些则与Rust编译器中的不稳定特性相关。这里有几个特性需要相应的#![feature(...)]属性来启用，因此在[Unstable Book]中有更详细的文档说明。必要时，相关章节会链接到该手册。
 
 [Unstable Book]: ../unstable-book/index.html
 
-## Nightly-gated functionality
+## Nightly-gated 功能
 
-These features just require a nightly build to operate. Unlike the other features on this page,
-these don't need to be "turned on" with a command-line flag or a `#![feature(...)]` attribute in
-your crate. This can give them some subtle fallback modes when used on a stable release, so be
-careful!
+这些特性只需要一个夜间构建版本即可运行。不同于本页上的其他特性，这些特性不需要通过命令行标志或在你的 crates 中使用 #![feature(...)] 属性来“开启”。这可以给它们在稳定版上使用时提供一些微妙的回退模式，所以请注意！
 
-### Error numbers for `compile-fail` doctests
+### 用于 compile-fail 文档测试的错误编号
 
-As detailed in [the chapter on documentation tests][doctest-attributes], you can add a
-`compile_fail` attribute to a doctest to state that the test should fail to compile. However, on
-nightly, you can optionally add an error number to state that a doctest should emit a specific error
-number:
+正如[文档测试章节][doctest-attributes]中所详述的那样，你可以在一个文档测试（doctest）中添加一个 compile_fail 属性来表明这个测试应该编译失败。但是，在夜间构建版本（nightly）中，你可以选择性地添加一个错误编号来指定文档测试应该触发特定的错误编号：
 
 [doctest-attributes]: documentation-tests.html#attributes
 
@@ -29,33 +19,22 @@ number:
 extern { fn some_func<T>(x: T); }
 ```
 ``````
+错误索引使用它来确保与给定错误号相对应的样本正确地发出该错误代码。但是，不能保证这些错误代码是一段代码在不同版本之间发出的唯一内容，因此将来不太可能稳定下来。
 
-This is used by the error index to ensure that the samples that correspond to a given error number
-properly emit that error code. However, these error codes aren't guaranteed to be the only thing
-that a piece of code emits from version to version, so this is unlikely to be stabilized in the
-future.
+尝试在稳定版本中使用这些错误编号会导致代码示例被当作普通文本处理。
 
-Attempting to use these error numbers on stable will result in the code sample being interpreted as
-plain text.
+## 对 #[doc] 属性的扩展
 
-## Extensions to the `#[doc]` attribute
+这些特性通过扩展 #[doc] 属性来工作，因此可以被编译器捕获，并且可以在你的 crate 中通过使用 #![feature(...)] 属性来启用。
 
-These features operate by extending the `#[doc]` attribute, and thus can be caught by the compiler
-and enabled with a `#![feature(...)]` attribute in your crate.
+### `#[doc(cfg)]`: 记录代码需要哪些平台或功能
 
-### `#[doc(cfg)]`: Recording what platforms or features are required for code to be present
+你可以使用 `#[doc(cfg(...))]` 来告诉 Rustdoc 某个特性具体出现在哪些平台上。这会产生两个效果：
 
-You can use `#[doc(cfg(...))]` to tell Rustdoc exactly which platform items appear on.
-This has two effects:
+1. 文档测试（doctests）只会在合适的平台上运行；
+2. 当 Rustdoc 渲染该特性的文档时，会附带一个横幅说明该特性仅在某些平台上可用。
 
-1. doctests will only run on the appropriate platforms, and
-2. When Rustdoc renders documentation for that item, it will be accompanied by a banner explaining
-   that the item is only available on certain platforms.
-
-`#[doc(cfg)]` is intended to be used alongside [`#[cfg(doc)]`][cfg-doc].
-For example, `#[cfg(any(windows, doc))]` will preserve the item either on Windows or during the
-documentation process. Then, adding a new attribute `#[doc(cfg(windows))]` will tell Rustdoc that
-the item is supposed to be used on Windows. For example:
+#[doc(cfg(...))] 是设计用来与 #[cfg(doc)] 配合使用的。例如，#[cfg(any(windows, doc))] 会在 Windows 平台上或在文档生成过程中保留该特性。接着，添加一个新的属性 #[doc(cfg(windows))] 将会告诉 Rustdoc 该特性是在 Windows 上使用的。例如：
 
 ```rust
 #![feature(doc_cfg)]
@@ -77,12 +56,9 @@ pub struct UnixToken;
 pub struct SerdeToken;
 ```
 
-In this sample, the tokens will only appear on their respective platforms, but they will both appear
-in documentation.
+在这个示例中，相关的代码片段只会出现在各自的平台上，但它们都会出现在文档中。
 
-`#[doc(cfg(...))]` was introduced to be used by the standard library and currently requires the
-`#![feature(doc_cfg)]` feature gate. For more information, see [its chapter in the Unstable
-Book][unstable-doc-cfg] and [its tracking issue][issue-doc-cfg].
+`#[doc(cfg(...))]` 被引入以供标准库使用，并且目前需要`#![feature(doc_cfg)]` 这一特性门控。想要了解更多, 请看 [不稳定特性手册][unstable-doc-cfg] 和[其跟踪议题][issue-doc-cfg].
 
 ### `doc_auto_cfg`: Automatically generate `#[doc(cfg)]`
 
